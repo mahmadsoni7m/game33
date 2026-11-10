@@ -1,9 +1,11 @@
 
-name: Build Cyber Void Android APK
+name: Build Cyber Void Survivor APK
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -11,10 +13,11 @@ permissions:
 
 jobs:
   build-apk:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -28,22 +31,30 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Check project
+      - name: Check project files
         run: |
           test -f package.json
-          test -d android
-          echo "Project structure OK"
+          test -f capacitor.config.ts
+          echo "Project files found"
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build web
+      - name: Build web game
         run: npm run build
+
+      - name: Check build output
+        run: |
+          test -d dist
+          echo "Web build completed"
+
+      - name: Add Android platform
+        run: npx cap add android
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build APK
+      - name: Build Debug APK
         working-directory: android
         run: |
           chmod +x gradlew
@@ -52,7 +63,7 @@ jobs:
       - name: Verify APK
         run: |
           test -f android/app/build/outputs/apk/debug/app-debug.apk
-          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          echo "APK successfully generated"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
