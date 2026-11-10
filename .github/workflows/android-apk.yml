@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - master
+
   workflow_dispatch:
 
 permissions:
@@ -17,54 +18,67 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Download source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Install Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
+      # 3. Install Java
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Check project files
+      # 4. Check project files
+      - name: Check project structure
         run: |
           test -f package.json
-          test -f capacitor.config.ts
-          echo "Project files found"
+          test -f capacitor.config.json
+          echo "Project structure OK"
 
+      # 5. Install dependencies
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      # 6. Build web game
       - name: Build web game
         run: npm run build
 
+      # 7. Check web output
       - name: Check build output
         run: |
           test -d dist
-          echo "Web build completed"
+          test -f dist/index.html
+          echo "Web build OK"
 
+      # 8. Add Android platform
       - name: Add Android platform
         run: npx cap add android
 
+      # 9. Sync Capacitor
       - name: Sync Capacitor
         run: npx cap sync android
 
+      # 10. Build APK
       - name: Build Debug APK
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
+      # 11. Verify APK
       - name: Verify APK
         run: |
           test -f android/app/build/outputs/apk/debug/app-debug.apk
           echo "APK successfully generated"
 
+      # 12. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
